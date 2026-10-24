@@ -43,7 +43,8 @@ function thinkingConfigFor(model) {
   return undefined;
 }
 
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.1-flash-lite';
+// Fallback chain: the first model that differs from the one that just failed.
+const FALLBACKS = [process.env.GEMINI_FALLBACK_MODEL, 'gemini-3.1-flash-lite', 'gemini-3.5-flash'].filter(Boolean);
 
 // Try the primary model; on overload (503/429/5xx) or timeout, retry once on the fallback model.
 async function gemini(opts) {
@@ -51,9 +52,10 @@ async function gemini(opts) {
     return await geminiOnce(opts);
   } catch (e) {
     const retryable = e.name === 'TimeoutError' || e.name === 'AbortError' || [429, 500, 502, 503, 504].includes(e.upstream);
-    if (!retryable || opts.model === FALLBACK_MODEL) throw e;
-    console.warn(`  ${opts.model} failed (${e.upstream ?? e.name}); falling back to ${FALLBACK_MODEL}`);
-    return geminiOnce({ ...opts, model: FALLBACK_MODEL, timeoutMs: opts.fallbackTimeoutMs ?? opts.timeoutMs });
+    const fallback = FALLBACKS.find((m) => m !== opts.model);
+    if (!retryable || !fallback) throw e;
+    console.warn(`  ${opts.model} failed (${e.upstream ?? e.name}); falling back to ${fallback}`);
+    return geminiOnce({ ...opts, model: fallback, timeoutMs: opts.fallbackTimeoutMs ?? opts.timeoutMs });
   }
 }
 
