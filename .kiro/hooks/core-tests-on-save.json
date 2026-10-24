@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Run core rule tests on save",
+      "trigger": "PostFileSave",
+      "description": "Runs the unit and property-based tests for Iris's core rules (interrupt, cooldown, where-is, safety, Live gating) whenever core logic is saved.",
+      "matcher": "(app|web)/src/(core/.*|live|agents)\\.ts$",
+      "action": {
+        "type": "command",
+        "command": "cd app && npx vitest run --reporter=dot 2>&1 | tail -15",
+        "timeout": 120
+      }
+    }
+  ]
+}

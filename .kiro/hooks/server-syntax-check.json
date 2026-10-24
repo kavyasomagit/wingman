@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Syntax-check server code on save",
+      "trigger": "PostFileSave",
+      "description": "Catches syntax errors in the Node proxy and Vercel functions immediately, before a restart or deploy fails during the demo.",
+      "matcher": "(server/.*\\.mjs|web/api/.*\\.js)$",
+      "action": {
+        "type": "command",
+        "command": "node --check server/index.mjs && node --check web/api/_lib/iris.js && echo \"server syntax OK\"",
+        "timeout": 30
+      }
+    }
+  ]
+}
